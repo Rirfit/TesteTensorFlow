@@ -739,80 +739,384 @@ export const TRIANGULATION = [
     335,
     406,
     418,
+    364,
+    367,
+    416,
+    423,
+    358,
+    327,
+    251,
+    284,
+    298,
+    281,
+    5,
+    4,
+    373,
+    374,
+    253,
+    307,
+    320,
+    321,
+    425,
+    427,
+    411,
+    421,
+    313,
+    18,
+    321,
+    405,
+    406,
+    320,
+    404,
+    405,
+    315,
+    16,
+    17,
+    426,
+    425,
+    266,
+    377,
+    400,
+    369,
+    322,
+    391,
+    269,
+    417,
+    465,
+    464,
+    386,
+    257,
+    258,
+    466,
+    260,
+    388,
+    456,
+    399,
+    419,
+    284,
+    332,
+    333,
+    417,
+    285,
+    8,
+    346,
+    340,
+    261,
+    413,
+    441,
+    285,
+    327,
+    460,
+    328,
+    355,
+    371,
+    329,
+    392,
+    439,
+    438,
+    382,
+    341,
+    256,
+    429,
+    420,
+    360,
+    364,
+    394,
+    379,
+    277,
+    343,
+    437,
+    443,
+    444,
+    283,
+    275,
+    440,
+    363,
+    431,
+    262,
+    369,
+    297,
+    338,
+    337,
+    273,
+    375,
+    321,
+    450,
+    451,
+    349,
+    446,
+    342,
+    467,
+    293,
+    334,
+    282,
+    458,
+    461,
+    462,
+    276,
+    353,
+    383,
+    308,
+    324,
+    325,
+    276,
+    300,
+    293,
+    372,
+    345,
+    447,
+    382,
+    398,
+    362,
+    352,
+    345,
+    340,
+    274,
+    1,
+    19,
+    456,
+    248,
+    281,
+    436,
+    427,
+    425,
+    381,
+    256,
+    252,
+    269,
+    391,
+    393,
+    200,
+    199,
+    428,
+    266,
+    330,
+    329,
+    287,
+    273,
+    422,
+    250,
+    462,
+    328,
+    258,
+    286,
+    384,
+    265,
+    353,
+    342,
+    387,
+    259,
+    257,
+    424,
+    431,
+    430,
+    342,
+    353,
+    276,
+    273,
+    335,
+    424,
+    292,
+    325,
+    307,
+    366,
+    447,
+    345,
+    271,
+    303,
+    302,
+    423,
+    266,
+    371,
+    294,
+    455,
+    460,
+    279,
+    278,
+    294,
+    271,
+    272,
+    304,
+    432,
+    434,
+    427,
+    272,
+    407,
+    408,
+    394,
+    430,
+    431,
+    395,
+    369,
+    400,
+    334,
+    333,
+    299,
+    351,
+    417,
+    168,
+    352,
+    280,
+    411,
+    325,
+    319,
+    320,
+    295,
+    296,
+    336,
+    319,
+    403,
+    404,
+    330,
+    348,
+    349,
+    293,
+    298,
+    333,
+    323,
+    454,
+    447,
+    15,
+    16,
+    315,
+    358,
+    429,
+    279,
+    14,
+    15,
+    316,
+    285,
+    336,
+    9,
+    329,
+    349,
+    350,
+    374,
+    380,
+    252,
+    318,
+    402,
+    403,
+    6,
+    197,
+    419,
+    318,
+    319,
+    325,
+    367,
+    364,
+    365,
+    435,
+    367,
+    397,
+    344,
+    438,
+    439,
+    272,
+    271,
+    311,
+    195,
+    5,
+    281,
+    273,
+    287,
+    291,
+    396,
+    428,
+    199,
+    311,
+    271,
+    268,
+    283,
+    444,
+    445,
+    373,
+    254,
+    339,
+    263,
+    466,
+    249,
+    282,
+    334,
+    296,
+    449,
+    347,
+    346,
+    264,
+    447,
+    454,
+    336,
+    296,
+    299,
+    338,
+    10,
+    151,
+    278,
+    439,
+    455,
+    292,
+    407,
+    415,
+    358,
+    371,
+    355,
+    340,
+    345,
+    372,
+    390,
+    249,
+    466,
+    346,
+    347,
+    280
+ 
+  ];
 
+// desenho triangulos
+const drawPath = (ctx, points, closePath) => {
+    const region = new Path2D();
+    region.moveTo(points[0][0], points[0][1]);
+    for (let i = 1; i < points.length; i++) {
+        const point = points[i];
+        region.lineTo(point[0], point[1]);
+    }
+    if (closePath) {
+        region.closePath();
+    }
+    ctx.strokeStyle = "green"
+    ctx.stroke(region);
+}
 
-];
-
-
-
-// Set up the scene
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.z = 5;
-
-const renderer = new THREE.WebGLRenderer({ alpha: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
-
-// Variable to store the glasses model
-let glasses;
-
-// Load the 3D model
-const loadGlassesModel = () => {
-    const mtlLoader = new MTLLoader();
-    mtlLoader.load('/frames/frame1/oculos.mtl', (materials) => {
-        materials.preload();
-
-        const objLoader = new OBJLoader();
-        objLoader.setMaterials(materials);
-        objLoader.load('/frames/frame1/oculos.obj', (object) => {
-            object.scale.set(0.1, 0.1, 0.1); // Adjust scale as necessary
-            scene.add(object);
-            glasses = object; // Set the global reference
-        });
-    });
-};
-
-// Function to update the glasses position based on facial keypoints
-const updateGlassesPosition = (keypoints) => {
-    if (!glasses) return; // Ensure glasses model is loaded
-
-    const leftEye = keypoints[33];
-    const rightEye = keypoints[263];
-
-    const eyeX = (leftEye[0] + rightEye[0]) / 2;
-    const eyeY = (leftEye[1] + rightEye[1]) / 2;
-    const eyeDistance = Math.hypot(rightEye[0] - leftEye[0], rightEye[1] - leftEye[1]);
-
-    // Convert 2D keypoints to 3D world position
-    glasses.position.set(eyeX / 100, eyeY / 100, 0); // Adjust as needed
-    glasses.scale.set(eyeDistance * 0.02, eyeDistance * 0.02, eyeDistance * 0.02); // Adjust scaling
-
-    // Rotate based on the angle between the eyes
-    glasses.rotation.y = Math.atan2(rightEye[1] - leftEye[1], rightEye[0] - leftEye[0]);
-};
-
-// Load the model initially
-loadGlassesModel();
-
-// Render loop
-const animate = () => {
-    requestAnimationFrame(animate);
-    renderer.render(scene, camera);
-};
-animate();
-
-// Updated drawMesh function to position the 3D glasses model
-export const drawMesh = (predictions) => {
+//desenho pontos
+export const drawMesh = (predictions, ctx) => {
     if (predictions.length > 0) {
         predictions.forEach(prediction => {
             const keypoints = prediction.scaledMesh;
+            //desenhar triangulos
+            for (let i = 0; i < TRIANGULATION.length / 3; i++) {
+                const points = [
+                    TRIANGULATION[i * 3],
+                    TRIANGULATION[i * 3 + 1],
+                    TRIANGULATION[i * 3 + 2],
+                ].map((index) => keypoints[index]);
+                drawPath(ctx, points, true)
 
-            // Update 3D glasses model position based on keypoints
-            updateGlassesPosition(keypoints);
+            }
+
+            // desenhar pontos
+            
+            for (let i = 0; i < keypoints.length; i++) {
+                const x = keypoints[i][0]
+                const y = keypoints[i][1]
+                ctx.beginPath();
+                ctx.arc(x, y, 1, 0, 3 * Math.PI)
+                ctx.fillStyle = "aqua";
+                ctx.fill();
+
+            }
+
         });
     }
-};
 
-
+}
 
