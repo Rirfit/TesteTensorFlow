@@ -1,3 +1,7 @@
+import * as THREE from 'three';
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
+import { MTLLoader } from 'three/examples/jsm/loaders/MTLLoader.js';
+
 //metricas para triangulação
 export const TRIANGULATION = [
     127,
@@ -739,52 +743,76 @@ export const TRIANGULATION = [
 
 ];
 
-// desenho triangulos
-const drawPath = (ctx, points, closePath) => {
-    const region = new Path2D();
-    region.moveTo(points[0][0], points[0][1]);
-    for (let i = 1; i < points.length; i++) {
-        const point = points[i];
-        region.lineTo(point[0], point[1]);
-    }
-    if (closePath) {
-        region.closePath();
-    }
-    ctx.strokeStyle = "green"
-    ctx.stroke(region);
-}
 
-//desenho pontos
-export const drawMesh = (predictions, ctx) => {
+
+// Set up the scene
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.z = 5;
+
+const renderer = new THREE.WebGLRenderer({ alpha: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// Variable to store the glasses model
+let glasses;
+
+// Load the 3D model
+const loadGlassesModel = () => {
+    const mtlLoader = new MTLLoader();
+    mtlLoader.load('/frames/frame1/oculos.mtl', (materials) => {
+        materials.preload();
+
+        const objLoader = new OBJLoader();
+        objLoader.setMaterials(materials);
+        objLoader.load('/frames/frame1/oculos.obj', (object) => {
+            object.scale.set(0.1, 0.1, 0.1); // Adjust scale as necessary
+            scene.add(object);
+            glasses = object; // Set the global reference
+        });
+    });
+};
+
+// Function to update the glasses position based on facial keypoints
+const updateGlassesPosition = (keypoints) => {
+    if (!glasses) return; // Ensure glasses model is loaded
+
+    const leftEye = keypoints[33];
+    const rightEye = keypoints[263];
+
+    const eyeX = (leftEye[0] + rightEye[0]) / 2;
+    const eyeY = (leftEye[1] + rightEye[1]) / 2;
+    const eyeDistance = Math.hypot(rightEye[0] - leftEye[0], rightEye[1] - leftEye[1]);
+
+    // Convert 2D keypoints to 3D world position
+    glasses.position.set(eyeX / 100, eyeY / 100, 0); // Adjust as needed
+    glasses.scale.set(eyeDistance * 0.02, eyeDistance * 0.02, eyeDistance * 0.02); // Adjust scaling
+
+    // Rotate based on the angle between the eyes
+    glasses.rotation.y = Math.atan2(rightEye[1] - leftEye[1], rightEye[0] - leftEye[0]);
+};
+
+// Load the model initially
+loadGlassesModel();
+
+// Render loop
+const animate = () => {
+    requestAnimationFrame(animate);
+    renderer.render(scene, camera);
+};
+animate();
+
+// Updated drawMesh function to position the 3D glasses model
+export const drawMesh = (predictions) => {
     if (predictions.length > 0) {
-
         predictions.forEach(prediction => {
             const keypoints = prediction.scaledMesh;
-            //desenhar triangulos
-            for (let i = 0; i < TRIANGULATION.length / 3; i++) {
-                const points = [
-                    TRIANGULATION[i * 3],
-                    TRIANGULATION[i * 3 + 1],
-                    TRIANGULATION[i * 3 + 2],
-                ].map((index) => keypoints[index]);
-                drawPath(ctx, points, true)
 
-            }
-
-            // desenhar pontos
-            
-            for (let i = 0; i < keypoints.length; i++) {
-                const x = keypoints[i][0]
-                const y = keypoints[i][1]
-                ctx.beginPath();
-                ctx.arc(x, y, 1, 0, 3 * Math.PI)
-                ctx.fillStyle = "aqua";
-                ctx.fill();
-
-            }
-
+            // Update 3D glasses model position based on keypoints
+            updateGlassesPosition(keypoints);
         });
     }
+};
 
-}
+
 
