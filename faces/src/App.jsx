@@ -19,7 +19,7 @@ function App() {
     });
     setInterval(() => {
       detect(net)  
-    }, 100)
+    }, 500)
   };
 
   //detect function
