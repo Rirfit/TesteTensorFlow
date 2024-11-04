@@ -1,88 +1,61 @@
-import { useState, useRef } from 'react'
-import * as tf from "@tensorflow/tfjs"
-import * as facemesh from "@tensorflow-models/facemesh"
-import Webcam from "react-webcam"
-import './App.css'
-import { drawMesh } from './utilities'
-
-
+import { useRef, useEffect } from 'react';
+import * as tf from "@tensorflow/tfjs";
+import * as facemesh from "@tensorflow-models/facemesh";
+import Webcam from "react-webcam";
+ import './App.css';
+import { drawMesh } from './utilities';
 
 function App() {
-  //setup referencias
   const webcamRef = useRef(null);
   const canvasRef = useRef(null);
 
-  //load facemesh
-  const runFacemesh = async () =>{
+  // Load facemesh
+  const runFacemesh = async () => {
     const net = await facemesh.load({
-      inputResolution:{width:640, height:480}, scale:0.8
+      inputResolution: { width: 640, height: 480 }, scale: 0.8
     });
     setInterval(() => {
-      detect(net)  
-    }, 500)
+      detect(net);
+    }, 100);
   };
 
-  //detect function
-  const detect = async(net) =>{
-    if(typeof webcamRef.current !== "undefined" && webcamRef.current !== null && webcamRef.current.video.readyState === 4){
-      //get propriedade do video
-      const video = webcamRef.current.video
-      const videoWidth = webcamRef.current.video.videoWidth
-      const videoHeight = webcamRef.current.video.videoHeight
+  // Detect function
+  const detect = async (net) => {
+    if (webcamRef.current && webcamRef.current.video.readyState === 4) {
+      const video = webcamRef.current.video;
+      const videoWidth = video.videoWidth;
+      const videoHeight = video.videoHeight;
 
-      //set video largura
-      webcamRef.current.video.width = videoWidth
-      webcamRef.current.video.height = videoHeight
-
-      //set canvas largura e altura
+      webcamRef.current.video.width = videoWidth;
+      webcamRef.current.video.height = videoHeight;
       canvasRef.current.width = videoWidth;
       canvasRef.current.height = videoHeight;
 
-      //detection
       const face = await net.estimateFaces(video);
-      console.log(face);
-
-      //contexto do canvas para desenhar
       const ctx = canvasRef.current.getContext("2d");
-      drawMesh(face, ctx)
+      drawMesh(face, ctx, videoWidth, videoHeight);
     }
-  }
+  };
 
-  runFacemesh();
+  useEffect(() => { runFacemesh(); }, []);
+  
   return (
-    <>
-     <div className="app">
-      <header className='App-header'>
-      <Webcam ref={webcamRef} style={
-        {
-          position:"absolute",
-          marginLeft:"auto",
-          marginRight:"auto",
-          left:0,
-          right:0,
-          textAlign:"center",
-          zindex:9,
-          width: 640,
-          height:480
-        }
-      }/>
-      <canvas ref={canvasRef} style={
-        {
-          position:"absolute",
-          marginLeft:"auto",
-          marginRight:"auto",
-          left:0,
-          right:0,
-          textAlign:"center",
-          zindex:9,
-          width: 640,
-          height:480}
-      }/>
+    <div className="app">
+      <header className="App-header">
+        <Webcam ref={webcamRef} style={{
+          position: "absolute",
+          left: 0, right: 0, zIndex: 8, // Posiciona a webcam atrás do renderer
+          width: 640, height: 480
+        }} />
+        <canvas ref={canvasRef} style={{
+          position: "absolute",
+          left: 0, right: 0,
+          margin: "auto", zIndex: 8,
+          width: 640, height: 480
+        }} />
       </header>
-     </div>
-     
-    </>
-  )
+    </div>
+  );
 }
 
-export default App
+export default App;

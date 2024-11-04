@@ -1072,37 +1072,41 @@ export const TRIANGULATION = [
  
   ];
 
-// Set up the scene
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.z = 5;
+  const scene = new THREE.Scene(); 
+  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.z = 5.5;
+camera.position.x = 0;
+camera.position.y = 2; // Ajuste a posição para alinhar a perspectiva
+camera.lookAt(new THREE.Vector3(0, 0, 0)); // Centralize a visão da câmera
 
-const renderer = new THREE.WebGLRenderer({ alpha: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
-
-// Variable to store the glasses model
-let glasses;
-
-// Load the 3D model
-const loadGlassesModel = () => {
-    const mtlLoader = new MTLLoader();
-    mtlLoader.load('/frames/frame1/oculos.mtl', (materials) => {
-        materials.preload();
-
-        const objLoader = new OBJLoader();
-        objLoader.setMaterials(materials);
-        objLoader.load('/frames/frame1/oculos.obj', (object) => {
-            object.scale.set(0.1, 0.1, 0.1); // Adjust scale as necessary
-            scene.add(object);
-            glasses = object; // Set the global reference
-        });
-    });
-};
-
-// Function to update the glasses position based on facial keypoints
-const updateGlassesPosition = (keypoints) => {
-    if (!glasses) return; // Ensure glasses model is loaded
+  
+  const renderer = new THREE.WebGLRenderer({ alpha: true });
+  renderer.setSize(640, 480);
+  renderer.domElement.style.position = "relative"; // Posiciona o renderer sobre a webcam
+  renderer.domElement.style.zIndex = 10; // Coloca o renderer acima da webcam
+  document.body.appendChild(renderer.domElement);
+  
+  let glasses;
+  
+  // Carregar o modelo 3D
+  const loadGlassesModel = () => {
+      const mtlLoader = new MTLLoader();
+      mtlLoader.load('/frames/frame1/oculos.mtl', (materials) => {
+          materials.preload();
+  
+          const objLoader = new OBJLoader();
+          objLoader.setMaterials(materials);
+          objLoader.load('/frames/frame1/oculos.obj', (object) => {
+              object.scale.set(0.1, 0.1, 0.1);
+              scene.add(object);
+              glasses = object;
+          });
+      });
+  };
+  
+  // Função para atualizar a posição dos óculos
+  const updateGlassesPosition = (keypoints, videoWidth, videoHeight) => {
+    if (!glasses) return;
 
     const leftEye = keypoints[33];
     const rightEye = keypoints[263];
@@ -1111,33 +1115,38 @@ const updateGlassesPosition = (keypoints) => {
     const eyeY = (leftEye[1] + rightEye[1]) / 2;
     const eyeDistance = Math.hypot(rightEye[0] - leftEye[0], rightEye[1] - leftEye[1]);
 
-    // Convert 2D keypoints to 3D world position
-    glasses.position.set(eyeX / 100, eyeY / 100, 0); // Adjust as needed
-    glasses.scale.set(eyeDistance * 0.02, eyeDistance * 0.02, eyeDistance * 0.02); // Adjust scaling
+    // Posicionamento do modelo 3D (invertendo Y e centralizando em relação ao vídeo)
+    glasses.position.set((eyeX - videoWidth / 2) / 100, -(eyeY - videoHeight / 2) / 100, 0);
+    glasses.scale.set(eyeDistance * 0.02, eyeDistance * 0.02, eyeDistance * 0.02);
 
-    // Rotate based on the angle between the eyes
-    glasses.rotation.y = Math.atan2(rightEye[1] - leftEye[1], rightEye[0] - leftEye[0]);
+    // Ajuste de rotação
+    glasses.rotation.x = 0; // Alinhe horizontalmente se necessário
+    glasses.rotation.y = 0;
+    //Math.atan2(rightEye[1] - leftEye[1], rightEye[0] - leftEye[0]);
+    glasses.rotation.z = 0; // Alinhe verticalmente se necessário
 };
 
-// Load the model initially
-loadGlassesModel();
+  
+  // Carregar o modelo inicialmente
+  loadGlassesModel();
+  
+  // Loop de renderização
+  const animate = () => {
+      requestAnimationFrame(animate);
+      renderer.render(scene, camera);
+  };
+  animate();
+  
+  // Função para desenhar a malha e posicionar o modelo 3D
+  export const drawMesh = (predictions, ctx, videoWidth, videoHeight) => {
+      if (predictions.length > 0) {
+          predictions.forEach(prediction => {
+              const keypoints = prediction.scaledMesh;
+  
+              // Atualizar a posição do modelo 3D com base nos pontos faciais
+              updateGlassesPosition(keypoints, videoWidth, videoHeight);
+          });
+      }
+  };
 
-// Render loop
-const animate = () => {
-    requestAnimationFrame(animate);
-    renderer.render(scene, camera);
-};
-animate();
-
-// Updated drawMesh function to position the 3D glasses model
-export const drawMesh = (predictions) => {
-    if (predictions.length > 0) {
-        predictions.forEach(prediction => {
-            const keypoints = prediction.scaledMesh;
-
-            // Update 3D glasses model position based on keypoints
-            updateGlassesPosition(keypoints);
-        });
-    }
-};
 
