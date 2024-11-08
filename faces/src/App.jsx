@@ -58,7 +58,9 @@ function App() {
       const eyeDistance = Math.hypot(rightEye[0] - leftEye[0], rightEye[1] - leftEye[1]);
 
       glasses.position.set((eyeX - videoWidth / 2) / 100, -(eyeY - videoHeight / 2) / 100, 0);
-      glasses.scale.set(eyeDistance * 0.02, eyeDistance * 0.02, eyeDistance * 0.02);
+
+      // Ajuste de escala para óculos menores
+      glasses.scale.set(eyeDistance * 0.015, eyeDistance * 0.015, eyeDistance * 0.015);
       glasses.rotation.x = 0;
       glasses.rotation.y = Math.atan2(rightEye[1] - leftEye[1], rightEye[0] - leftEye[0]);
       glasses.rotation.z = 0;
