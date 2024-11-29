@@ -49,22 +49,32 @@ function App() {
 
     const updateGlassesPosition = (keypoints, videoWidth, videoHeight) => {
       if (!glasses) return;
-
+  
+      // Ponto fixo de referência (ex.: ponto do nariz)
+      const nose = keypoints[6]; // Usando o nariz como ponto fixo
+  
+      // Distância entre os olhos para ajuste de escala
       const leftEye = keypoints[33];
       const rightEye = keypoints[263];
-
-      const eyeX = (leftEye[0] + rightEye[0]) / 2;
-      const eyeY = (leftEye[1] + rightEye[1]) / 2;
       const eyeDistance = Math.hypot(rightEye[0] - leftEye[0], rightEye[1] - leftEye[1]);
-
-      glasses.position.set((eyeX - videoWidth / 2) / 100, -(eyeY - videoHeight / 2) / 100, 0);
-
-      // Ajuste de escala para óculos menores
-      glasses.scale.set(eyeDistance * 0.015, eyeDistance * 0.015, eyeDistance * 0.015);
-      glasses.rotation.x = 0;
-      glasses.rotation.y = Math.atan2(rightEye[1] - leftEye[1], rightEye[0] - leftEye[0]);
-      glasses.rotation.z = 0;
-    };
+  
+      // Ajuste da posição dos óculos com base no ponto fixo, corrigindo a inversão no eixo X
+      glasses.position.set(
+          -(nose[0] - videoWidth / 2) / 100, // Inverte o valor no eixo horizontal
+          -(nose[1] - videoHeight / 2) / 100, // Centraliza verticalmente
+          -(nose[2] || 0) / 100 // Ajuste de profundidade
+      );
+  
+      // Escala dos óculos proporcional à distância entre os olhos
+      const scale = eyeDistance * 0.015; // Ajuste fino para a escala
+      glasses.scale.set(scale, scale, scale);
+  
+      // Rotação baseada na inclinação entre os olhos
+      const angle = Math.atan2(rightEye[1] - leftEye[1], rightEye[0] - leftEye[0]);
+      glasses.rotation.set(0, 0, angle);
+  };
+  
+  
 
     const animate = () => {
       requestAnimationFrame(animate);
@@ -118,7 +128,8 @@ function App() {
             left: 0,
             zIndex: 8,
             width: 640,
-            height: 480
+            height: 480,
+            transform: "scaleX(-1)"
           }} />
         </div>
       </header>
