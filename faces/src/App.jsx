@@ -9,6 +9,7 @@ import './App.css';
 
 function App() {
   const webcamRef = useRef(null);
+  const isFaceDetected = useRef(false); // Estado de detecção de rosto
 
   useEffect(() => {
     const scene = new THREE.Scene();
@@ -24,7 +25,6 @@ function App() {
     renderer.domElement.style.left = 0;
     renderer.domElement.style.zIndex = 9; // Coloca o renderer acima da webcam
 
-    // Adicione o renderer ao container da webcam
     const webcamContainer = document.getElementById('webcam-container');
     if (webcamContainer) {
       webcamContainer.appendChild(renderer.domElement);
@@ -41,6 +41,7 @@ function App() {
         objLoader.setMaterials(materials);
         objLoader.load('/frames/frame1/oculos.obj', (object) => {
           object.scale.set(0.1, 0.1, 0.1); // Ajuste de escala conforme necessário
+          object.visible = false; // Inicialmente invisível
           scene.add(object);
           glasses = object;
         });
@@ -49,32 +50,27 @@ function App() {
 
     const updateGlassesPosition = (keypoints, videoWidth, videoHeight) => {
       if (!glasses) return;
-  
-      // Ponto fixo de referência (ex.: ponto do nariz)
-      const nose = keypoints[6]; // Usando o nariz como ponto fixo
-  
-      // Distância entre os olhos para ajuste de escala
+
+      const nose = keypoints[6];
       const leftEye = keypoints[33];
       const rightEye = keypoints[263];
       const eyeDistance = Math.hypot(rightEye[0] - leftEye[0], rightEye[1] - leftEye[1]);
-  
-      // Ajuste da posição dos óculos com base no ponto fixo, corrigindo a inversão no eixo X
+
       glasses.position.set(
-          -(nose[0] - videoWidth / 2) / 100, // Inverte o valor no eixo horizontal
-          -(nose[1] - videoHeight / 2) / 100, // Centraliza verticalmente
-          -(nose[2] || 0) / 100 // Ajuste de profundidade
+        -(nose[0] - videoWidth / 2) / 100,
+        -(nose[1] - videoHeight / 2) / 100,
+        -(nose[2] || 0) / 100
       );
-  
-      // Escala dos óculos proporcional à distância entre os olhos
-      const scale = eyeDistance * 0.015; // Ajuste fino para a escala
+
+      const scale = eyeDistance * 0.015;
       glasses.scale.set(scale, scale, scale);
-  
-      // Rotação baseada na inclinação entre os olhos
+
       const angle = Math.atan2(rightEye[1] - leftEye[1], rightEye[0] - leftEye[0]);
       glasses.rotation.set(0, 0, angle);
-  };
-  
-  
+
+      // Tornar os óculos visíveis
+      glasses.visible = true;
+    };
 
     const animate = () => {
       requestAnimationFrame(animate);
@@ -102,7 +98,11 @@ function App() {
           const face = await net.estimateFaces(video);
 
           if (face.length > 0) {
+            isFaceDetected.current = true; // Atualiza estado de detecção
             updateGlassesPosition(face[0].scaledMesh, videoWidth, videoHeight);
+          } else {
+            isFaceDetected.current = false; // Nenhum rosto detectado
+            if (glasses) glasses.visible = false; // Torna os óculos invisíveis
           }
         }
       };
